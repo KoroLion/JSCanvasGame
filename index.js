@@ -1,0 +1,45 @@
+const WebServer = require('exjs-simple-server');
+let webServer = WebServer.startServer({
+    httpPort: 8080,
+});
+
+const WebSocket = require('ws');
+
+const wss = new WebSocket.Server({
+    server: webServer,
+});
+
+let clients = [], id = 1, usernames = {};
+
+function removeClient(id) {
+    for (let i = 0; i < clients.length; i++)
+        if (clients[i].id == id) {
+            clients.splice(i, 1);
+            delete usernames[id];
+            break;
+        }
+}
+
+function sendAll(message, id=0) {
+    for (let i = 0; i < clients.length; i++)
+        if (clients[i].id != id)
+            clients[i].send(message);
+}
+
+wss.on('connection', function connection(ws) {
+    ws.id = id++;
+    usernames[ws.id] = null;
+    clients.push(ws);
+
+    console.log('%d connected (%s:%i)', ws.id, ws._socket.remoteAddress, ws._socket.remotePort);
+
+    ws.on('message', function (message) {
+        sendAll(message, ws.id);
+    });
+
+    ws.on('close', function (e) {
+        console.log('%s (%d) disconnected (%s:%i)', usernames[ws.id], ws.id, ws._socket.remoteAddress, ws._socket.remotePort);
+        removeClient(ws.id);
+    });
+});
+console.log('WebSocket server started on port: %i', webServer.address().port);

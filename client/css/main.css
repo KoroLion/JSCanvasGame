@@ -1,0 +1,8 @@
+body {
+    background-image: url('../images/winter_wolves.png');
+    overflow-y: scroll;
+}
+
+canvas {
+    border: 1px solid grey;
+}
